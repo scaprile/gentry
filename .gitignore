@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+env/
+.tox/
+.nox/
+
+# build
+dist/
+build/
+*.egg-info/
+src/acconeer/exptool/_version.py
+
+# pytest
+.pytest_cache/
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# Docs
+docs/_build
+
+# Data
+*.h5
+*.npy
+*.npz
+
+# LaTeX
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.pdf
+*.gz
+
+# Jupyter
+*.ipynb
+
+# Jenkins
+stash/
+
+# mypy
+.mypy_cache/
+
+# git
+*.orig
