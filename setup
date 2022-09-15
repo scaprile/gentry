@@ -1,0 +1,16 @@
+
+python -m pip install --upgrade acconeer-exptool[algo]
+python -m pip install paho-mqtt 
+
+echo ""
+sleep 5
+echo "Relays should now activate sequentially"
+sleep 2
+python relays.py
+
+echo ""
+echo "Now connect one of the sensors and run 'python sensor.py'"
+echo "if everything went fine, run 'python basic.py -u /dev/ttyUSB0'"
+echo "otherwise, we need to find your serial port name..."
+echo "In any case, remove and repeat with the other sensor"
+
