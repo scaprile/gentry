@@ -4,12 +4,15 @@ except:
     import Mock.GPIO as GPIO
 import time
 
-# wiringPI(BOARD): 7, 3, 22, 25; Broadcomm(BCM): 4, 22, 6, 26
-relay = [7, 3, 22, 25]
+# Physical pin number (BOARD): 7, 15, 31, 37
+# Chip GPIO pin number, "Broadcomm" (BCM): 4, 22, 6, 26
+# anecdotic: wiringPI.h: 7, 3, 22, 25
+# 'gpio readall' is your friend
+relay = [4, 22, 6, 26]
 
-GPIO.setmode(GPIO.BOARD)
+GPIO.setmode(GPIO.BCM)
 for i in range(4):
-	GPIO.setup(relay[i], GPIO.OUT)
+    GPIO.setup(relay[i], GPIO.OUT)
 
 for i in range(4):
     GPIO.output(relay[i], GPIO.HIGH)
