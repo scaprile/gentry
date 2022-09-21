@@ -1,6 +1,13 @@
 
+sudo apt-get install -y libhdf5-serial-dev
+sudo apt-get install -y libatlas-base-dev
+
 python -m pip install --upgrade acconeer-exptool[algo]
-python -m pip install paho-mqtt 
+python -m pip install paho-mqtt
+
+# To be able to flash the sensor module:
+# python -m pip install stm32loader
+# stm32loader -p /dev/ttyUSB0 –e –w –v ThirdParty/acc_module_server.bin
 
 echo ""
 sleep 5
