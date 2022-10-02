@@ -1,6 +1,6 @@
 # Measuring range in meters, presence will be detected
 # between MIN and THRESHOLD
-DISTANCE_MIN = 1.0
+DISTANCE_MIN = 0.5
 DISTANCE_MAX = 3.0
 # Presence detection threshold
 DISTANCE_THRESHOLD = 2.3
@@ -16,7 +16,7 @@ TIME_IDLE = 60
 # 'gpio readall' is your friend
 relay = [4, 22, 6, 26]
 # Assign sensors (we've already made fancy names for them using udev rules)
-module = {"left": "/dev/ttyUSB0", "right": "/dev/sensor1"}
+module = {"left": "/dev/ttyUSB0", "right": "mock"} #/dev/sensor1
 # MQTT stuff
 device = "gentry1"                  # device name
 broker_addr = "broker.hivemq.com"   # broker name
@@ -34,7 +34,7 @@ from client import Client
 from sensor import Sensor
 
 def now():
-    return math.floor(time.time())
+    return time.time()
 
 def timerexpired(timer):
     if now() > timer :
@@ -60,7 +60,7 @@ out2 = False
 
 # status callback
 def status_buildmessage():
-    return status_build(now(), left, right, out1, out2)
+    return status_build(math.floor(now()), left, right, out1, out2)
 
 
 try:
@@ -74,6 +74,7 @@ try:
     # init sensors
     time.sleep(0.1)
     sensor_left = Sensor(module["left"], DISTANCE_MIN, DISTANCE_MAX)
+    sensor_right = Sensor(module["right"], DISTANCE_MIN, DISTANCE_MAX)
     # init timers
     idletime = now() + TIME_IDLE
     activetime = 0
@@ -88,27 +89,34 @@ try:
     changes = False
 
     while True:
+        looptime = now()
         # process sensors
-        sensor_left.process(DISTANCE_THRESHOLD)
+        distance = sensor_left.process()
+        if not distance is None:
+            print(distance)
+            left = True if distance <= DISTANCE_THRESHOLD else False
+        distance = sensor_right.process()
+        if not distance is None:
+            #print(distance)
+            right = True if distance <= DISTANCE_THRESHOLD else False
         # detect changes
         if right != oldright :
             oldright = right
-            print("right: " + "detect" if right else "idle")
+            print("right: " + ("detect" if right else "idle"))
             changes = True
         if left != oldleft :
             oldleft = left
-            print("left: " + "detect" if left else "idle")
+            print("left: " + ("detect" if left else "idle"))
             changes = True
-        # set output off on inactivity
+        # set output on on activity, off on inactivity
+        if left or right: activetime = now() + TIME_ACTIVE
         if timerexpired(activetime):
             out2 = False
-            inactivetime = time.time() + TIME_ACTIVE
-        # set output on on activity
-        if left or right:
-            activetime = now() + TIME_ACTIVE
-            if time.time() > inactivetime : out2 = True
+            inactivetime = now() + TIME_INACTIVE
+        else:
+            if timerexpired(inactivetime): out2 = True
         if out2 != oldout2 :
-            oldout = out2
+            oldout2 = out2
             print("out2: " + "on" if out2 else "off")
             changes = True
         # out1 not processed
@@ -125,7 +133,8 @@ try:
         GPIO.output(relay[0], GPIO.HIGH if out1 else GPIO.LOW)
         GPIO.output(relay[1], GPIO.HIGH if out2 else GPIO.LOW)
         # sleep for a while
-        time.sleep(0.1)
+        looptime = 0.2 -(now() - looptime)
+        if looptime > 0: time.sleep(looptime)
 
 except KeyboardInterrupt:  
     print(" exiting on user request")
@@ -134,4 +143,5 @@ finally:
     print("Outputs set to off")
     for i in range(4):
         GPIO.output(relay[i], GPIO.LOW)
-    #del sensors
+    del sensor_left
+    del sensor_right

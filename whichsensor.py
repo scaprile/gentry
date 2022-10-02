@@ -153,11 +153,14 @@ def module_software_test(port, flowcontrol):
 
 def main():
     parser = argparse.ArgumentParser(description='Test UART communication')
-    parser.add_argument('--port', default="/dev/ttyUSB0",
+    parser.add_argument('--p0', default="/dev/ttyUSB0",
                         help='Port to use, e.g.: /dev/ttyUSB0')
+    parser.add_argument('--p1', default="/dev/ttyUSB2",
+                        help='Port to use, e.g.: /dev/ttyUSB2')
 
     args = parser.parse_args()
-    module_software_test(args.port, False)
+    module_software_test(args.p0, False)
+    module_software_test(args.p1, False)
 
 
 if __name__ == "__main__":

@@ -10,6 +10,7 @@ def main():
     # use, and the verbosity level of the logging.
     args = et.a111.ExampleArgumentParser().parse_args()
 
+    print(args)
     # The client logs using the logging module with a logger named
     # acconeer.exptool.*. We call another helper function which sets up
     # the logging according to the verbosity level set in the arguments:
@@ -39,7 +40,8 @@ def main():
     # Other configuration options might be available. Check out the
     # example for the corresponding service/detector to see more.
 
-    client.connect()
+    info = client.connect()
+    print(info)
 
     # In most cases, explicitly calling connect is not necessary as
     # setup_session below will call connect if not already connected.
