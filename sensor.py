@@ -1,6 +1,7 @@
 
 import acconeer.exptool as acconeer
 import acconeer.exptool.a111.algo.distance_detector as distance_detector
+import numpy as np
 
 class Sensor:
     def __init__(self, dev, min, max):
@@ -30,9 +31,17 @@ class Sensor:
         self.client.start_session()
     def process(self):
         data_info, data = self.client.get_next()
+        # always returns data:
+        #   "sweep" and "sweep_index" are updated constantly
+        # actual processing is done when the configured number of frames (n) have been averaged, so
+        #   "found_peaks" is None except when n frames have been processed AND peaks have been found
+        #   "last_mean_sweep", "main_peak_hist_dist"... are updated every n frames
         result = self.processor.process(data, data_info)
         peaks = result["found_peaks"]
-        if (not peaks is None) and (len(peaks) > 0): return result["main_peak_hist_dist"][-1]
+        return {
+            "distance": result["main_peak_hist_dist"][-1] if (not peaks is None) and (len(peaks) > 0) else None,
+            "sweep": result["last_mean_sweep"].astype(int).tolist()
+        }
     def __del__(self):
         self.client.stop_session()
         self.client.disconnect()

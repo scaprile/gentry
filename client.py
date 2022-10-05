@@ -11,6 +11,7 @@ class Client:
     
     def __on_connect(self, client, userdata, flags, rc):
         print("Connected to broker with result code "+str(rc))
+        self.client.subscribe(self.pubtopic+"/rpc", 1)
         self.sendstatus("connect")
     
     def __on_subscribe(self, client, userdata, mid, granted_qos):
@@ -26,12 +27,14 @@ class Client:
             "id":   rmsg["id"],
             "method": rmsg["method"],
         }
-        if rmsg["method"] == "status":
-            msg["result"] = self.status_buildmessage()
-            self.client.publish(self.pubtopic+"/"+rmsg["src"], json.dumps(msg), 1, False)
+        if rmsg["method"] == "status" and self.status_buildmessage: msg["result"] = self.status_buildmessage()
+        elif rmsg["method"] == "data" and self.data_buildmessage: msg["result"] = self.data_buildmessage()
+        else: return
+        self.client.publish(self.pubtopic+"/"+rmsg["src"], json.dumps(msg), 1, False)
     
-    def __init__(self, broker_addr, broker_port, topic, device, status_cb):
+    def __init__(self, broker_addr, broker_port, topic, device, status_cb=None, data_cb=None):
         self.status_buildmessage = status_cb
+        self.data_buildmessage = data_cb
         self.client = mqtt.Client()
         self.client.on_connect = self.__on_connect
         self.client.on_message = self.__on_message
@@ -40,5 +43,6 @@ class Client:
         self.pubtopic = topic+"/"+device
         self.client.will_set(self.pubtopic, json.dumps({"event": "disconnect"}), 1, False)
         self.client.connect(broker_addr, broker_port)
-        self.client.subscribe(self.pubtopic+"/rpc", 1)
         self.client.loop_start()
+    def __del__(self):
+        self.client.loop_stop()

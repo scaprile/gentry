@@ -15,8 +15,6 @@ TIME_IDLE = 60
 # anecdotic: wiringPI.h: 7, 3, 22, 25
 # 'gpio readall' is your friend
 relay = [4, 22, 6, 26]
-# Assign sensors (we've already made fancy names for them using udev rules)
-module = {"left": "/dev/ttyUSB0", "right": "mock"} #/dev/sensor1
 # MQTT stuff
 device = "gentry1"                  # device name
 broker_addr = "broker.hivemq.com"   # broker name
@@ -24,12 +22,23 @@ broker_port = 1883                  # broker port
 topic = "adwais/gentry"             # topic name
 
 
+# Assign sensors; we've already made proper udev rules, overwrite if necessary
+from os import getenv
+l = getenv("SENSOR0") 
+r = getenv("SENSOR1") 
+module = {
+    "left": l if l else "/dev/sensor0",
+    "right": r if r else "/dev/sensor1"
+}
+print(module)
+
 try:
     import RPi.GPIO as GPIO
 except:
     import Mock.GPIO as GPIO
 import time
 import math
+from threading import Lock
 from client import Client
 from sensor import Sensor
 
@@ -37,20 +46,17 @@ def now():
     return time.time()
 
 def timerexpired(timer):
-    if now() > timer :
-        return True
-    return False
+    return True if now() > timer else False
 
 
 def status_build(ts, left, right, out1, out2):
-    msg = {
+    return {
         "timestamp": ts,
         "left": left,
         "right": right,
         "out1": out1,
         "out2": out2,
     }
-    return msg
 
 # state variables
 left = False
@@ -58,10 +64,18 @@ right = False
 out1 = False
 out2 = False
 
-# status callback
+lock = Lock()
+sweep_left = []
+sweep_right = []
+# These run on the MQTT client thread context
+# status callback, worst case it has an old value in some variables
 def status_buildmessage():
     return status_build(math.floor(now()), left, right, out1, out2)
-
+# data callback, using 'lock'
+def data_buildmessage():
+    with lock:
+        msg = {"left": sweep_left, "right": sweep_right}
+    return msg
 
 try:
     # init relays, avoid stupid warnings, we need the relays to stay off (safety) so we won't "cleanup" on exit
@@ -70,14 +84,14 @@ try:
     for i in range(4):
         GPIO.setup(relay[i], GPIO.OUT)
     # init MQTT client
-    client = Client(broker_addr, broker_port, topic, device, status_buildmessage)
+    client = Client(broker_addr, broker_port, topic, device, status_buildmessage, data_buildmessage)
     # init sensors
     time.sleep(0.1)
     sensor_left = Sensor(module["left"], DISTANCE_MIN, DISTANCE_MAX)
     sensor_right = Sensor(module["right"], DISTANCE_MIN, DISTANCE_MAX)
     # init timers
     idletime = now() + TIME_IDLE
-    activetime = 0
+    activetime = now() + TIME_ACTIVE
     inactivetime = 0
     # init out1
     out1 = True
@@ -91,14 +105,18 @@ try:
     while True:
         looptime = now()
         # process sensors
-        distance = sensor_left.process()
+        sensordata = sensor_left.process()
+        distance = sensordata["distance"]
         if not distance is None:
-            print(distance)
             left = True if distance <= DISTANCE_THRESHOLD else False
-        distance = sensor_right.process()
+        with lock:
+            sweep_left = sensordata["sweep"]
+        sensordata = sensor_right.process()
+        distance = sensordata["distance"]
         if not distance is None:
-            #print(distance)
             right = True if distance <= DISTANCE_THRESHOLD else False
+        with lock:
+            sweep_right = sensordata["sweep"]
         # detect changes
         if right != oldright :
             oldright = right
@@ -145,3 +163,4 @@ finally:
         GPIO.output(relay[i], GPIO.LOW)
     del sensor_left
     del sensor_right
+    del client
