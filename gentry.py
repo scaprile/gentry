@@ -31,6 +31,7 @@ module = {
     "right": r if r else "/dev/sensor1"
 }
 print(module)
+exitcode = 1
 
 try:
     import RPi.GPIO as GPIO
@@ -74,7 +75,10 @@ def status_buildmessage():
 # data callback, using 'lock'
 def data_buildmessage():
     with lock:
-        msg = {"left": sweep_left, "right": sweep_right}
+        msg = {
+            "left": { "dist": dist_left, "sweep": sweep_left,"thres": thres_left},
+            "right": {"dist": dist_right, "sweep": sweep_right, "thres": thres_right}
+        }
     return msg
 
 try:
@@ -107,16 +111,18 @@ try:
         # process sensors
         sensordata = sensor_left.process()
         distance = sensordata["distance"]
-        if not distance is None:
-            left = True if distance <= DISTANCE_THRESHOLD else False
+        left = True if distance and distance <= DISTANCE_THRESHOLD else False
         with lock:
+            dist_left = distance
             sweep_left = sensordata["sweep"]
+            thres_left = sensordata["thres"]
         sensordata = sensor_right.process()
         distance = sensordata["distance"]
-        if not distance is None:
-            right = True if distance <= DISTANCE_THRESHOLD else False
+        right = True if distance and distance <= DISTANCE_THRESHOLD else False
         with lock:
+            dist_right = distance
             sweep_right = sensordata["sweep"]
+            thres_right = sensordata["thres"]
         # detect changes
         if right != oldright :
             oldright = right
@@ -154,13 +160,19 @@ try:
         looptime = 0.2 -(now() - looptime)
         if looptime > 0: time.sleep(looptime)
 
-except KeyboardInterrupt:  
+except KeyboardInterrupt:
     print(" exiting on user request")
-
-finally:
     print("Outputs set to off")
     for i in range(4):
         GPIO.output(relay[i], GPIO.LOW)
+    exitcode = 0
+
+#except:
+#    print("*** Exception")
+#    exitcode = 2
+
+finally:
     del sensor_left
     del sensor_right
     del client
+    exit(exitcode)

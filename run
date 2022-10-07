@@ -4,4 +4,7 @@ echo "From now on your world will be controlled by Python..."
 echo "Buckle up... (it's the law)"
 echo ""
 
-python gentry.py
+while true ; do
+	python gentry.py
+	[ $? != 0 ] || break
+done
