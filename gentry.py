@@ -95,12 +95,12 @@ try:
     sensor_right = Sensor(module["right"], DISTANCE_MIN, DISTANCE_MAX)
     # init timers
     idletime = now() + TIME_IDLE
-    activetime = now() + TIME_ACTIVE
+    activetime = 0
     inactivetime = 0
     # init out1
     out1 = True
     # init state variables
-    oldout1 = out2
+    oldout1 = out1
     oldout2 = out2
     oldright = right
     oldleft = left
@@ -135,8 +135,8 @@ try:
         # set output on on activity, off on inactivity
         if left or right: activetime = now() + TIME_ACTIVE
         if timerexpired(activetime):
+            if out2: inactivetime = now() + TIME_INACTIVE
             out2 = False
-            inactivetime = now() + TIME_INACTIVE
         else:
             if timerexpired(inactivetime): out2 = True
         if out2 != oldout2 :
