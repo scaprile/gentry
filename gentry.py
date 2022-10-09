@@ -141,7 +141,7 @@ try:
             if timerexpired(inactivetime): out2 = True
         if out2 != oldout2 :
             oldout2 = out2
-            print("out2: " + "on" if out2 else "off")
+            print("out2: " + ("on" if out2 else "off"))
             changes = True
         # out1 not processed
         # report changes
