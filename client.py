@@ -18,11 +18,11 @@ class Client:
         print("Subscribed: " + str(mid) + " with qos: " + str(granted_qos))
     
     def __on_publish(self, client, userdata, mid):
-        print("Published: "+str(mid))
+        if self.verbose: print("Published: "+str(mid))
     
     def __on_message(self, client, userdata, message):
         rmsg = json.loads(message.payload.decode("utf-8"))
-        print("Got " + rmsg["method"] + " request from " + rmsg["src"])
+        if self.verbose: print("Got " + rmsg["method"] + " request from " + rmsg["src"])
         msg = {
             "id":   rmsg["id"],
             "method": rmsg["method"],
@@ -32,9 +32,10 @@ class Client:
         else: return
         self.client.publish(self.pubtopic+"/"+rmsg["src"], json.dumps(msg), 1, False)
     
-    def __init__(self, broker_addr, broker_port, topic, device, status_cb=None, data_cb=None):
+    def __init__(self, broker_addr, broker_port, topic, device, status_cb=None, data_cb=None, verbose=False):
         self.status_buildmessage = status_cb
         self.data_buildmessage = data_cb
+        self.verbose = verbose
         self.client = mqtt.Client()
         self.client.on_connect = self.__on_connect
         self.client.on_message = self.__on_message
