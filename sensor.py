@@ -48,8 +48,6 @@ class Sensor:
                 0 => just measured; -0.4 => 400ms ago
             - ("sweep_index" + 1) / dconfig.nbr_average:
                 integer => measurement time ; otherwise => averaging """
-#   cómo resincronizo ? yo pondría el índice en cero o reiniciaría el sensor...
-#   si no mide nada por un tiempo muy largo tal vez convenga reiniciar el sensor también...
         data_info, data = self.client.get_next()            # read the sensor
         result = self.processor.process(data, data_info)    # call the processor
         if len(result["main_peak_hist_sweep_s"]):
@@ -62,6 +60,8 @@ class Sensor:
                 self.threshold = np.nan_to_num(result["threshold"]).astype(int).tolist()
             elif not peaks is None: # Averaging, shouldn't get a valid measurement unless we got out of sync with the sensor
                 raise AssertionError # and this should never happen since we are calling the process with data
+        else: # no detections yet, need to send some threshold to have an idea anyway
+            self.threshold = np.nan_to_num(result["threshold"]).astype(int).tolist()
         return {
             "distance": self.distance,
             "sweep": result["last_mean_sweep"].astype(int).tolist(),
