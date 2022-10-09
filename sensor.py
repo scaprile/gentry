@@ -59,7 +59,7 @@ class Sensor:
                 if not result["found_peaks"]: self.distance = None # No detection
                 else: # detection(s), return the current main one
                     self.distance = result["main_peak_hist_dist"][-1].round(decimals=2) if (not peaks is None) and (len(peaks) > 0) else None
-                    self.threshold = np.nan_to_num(result["threshold"]).astype(int).tolist()
+                self.threshold = np.nan_to_num(result["threshold"]).astype(int).tolist()
             elif not peaks is None: # Averaging, shouldn't get a valid measurement unless we got out of sync with the sensor
                 raise AssertionError # and this should never happen since we are calling the process with data
         return {
