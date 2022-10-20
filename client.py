@@ -21,7 +21,9 @@ class Client:
         if self.verbose: print("Published: "+str(mid))
     
     def __on_message(self, client, userdata, message):
-        rmsg = json.loads(message.payload.decode("utf-8"))
+        try: rmsg = json.loads(message.payload.decode("utf-8"))
+        except json.JSONDecodeError: return
+        if "method" not in rmsg or "src" not in rmsg: return
         if self.verbose: print("Got " + rmsg["method"] + " request from " + rmsg["src"])
         msg = {
             "id":   rmsg["id"],
