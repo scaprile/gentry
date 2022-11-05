@@ -19,16 +19,16 @@ class Sensor:
         self.econfig.profile = acconeer.a111.EnvelopeServiceConfig.Profile.PROFILE_3
         self.econfig.downsampling_factor = 4
         self.econfig.hw_accelerated_average_samples = 10
-        self.econfig.gain = 0.82
+        self.econfig.gain = 0.95
         self.econfig.running_average_factor = 0
         self.econfig.update_rate = 5
         self.dconfig = distance_detector.ProcessingConfiguration()
         # https://docs.acconeer.com/en/latest/exploration_tool/algo/a111/distance_detector.html
         self.dconfig.nbr_average = 5
         self.dconfig.threshold_type = distance_detector.ProcessingConfiguration.ThresholdType.CFAR
-        self.dconfig.cfar_sensitivity = 0.4
+        self.dconfig.cfar_sensitivity = 0.55
         self.dconfig.cfar_guard_m = 0.2
-        self.dconfig.cfar_window_m = 0.06
+        self.dconfig.cfar_window_m = 0.1
         self.dconfig.peak_sorting_type = distance_detector.ProcessingConfiguration.PeakSorting.CLOSEST
         info = self.client.connect()
         print("Sensor firmware: " + info["version_str"])

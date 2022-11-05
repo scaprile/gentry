@@ -5,7 +5,7 @@ DISTANCE_MAX = 3.0
 # Presence detection threshold
 DISTANCE_THRESHOLD = 2.3
 # Keep relay on x seconds after no detection
-TIME_ACTIVE = 5
+TIME_ACTIVE = 10
 # Keep relay off x seconds before reacting to new detection
 TIME_INACTIVE = 0.5
 # Send idle message with current status every x seconds
